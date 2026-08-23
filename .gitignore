@@ -32,3 +32,4 @@ Thumbs.db
 # Raw datasets
 data/raw/*.csv
 data/processed/*.csv
+!data/processed/financial_data_feature_engineered.csv

@@ -236,17 +236,29 @@ def render():
         # ---------------------------
         with tabs[1]:
             st.subheader("Create a New Financial Assessment Record")
-            with st.form("create_record_form"):
-                new_data = render_25_field_form(key_suffix="create")
-                submit_create = st.form_submit_button("Save Record")
+            
+            # Fetch users to allow assignment
+            with get_db_session() as db:
+                from src.database.models import User
+                users = db.query(User).all()
                 
-            if submit_create:
-                with get_db_session() as db:
-                    try:
-                        created = create_assessment(db, new_data)
-                        st.success(f"Successfully created record with ID {created.id}.")
-                    except Exception as e:
-                        st.error(f"Error creating record: {e}")
+            if users:
+                user_options = {u.email: u.id for u in users}
+                with st.form("create_record_form"):
+                    selected_email = st.selectbox("Assign to User (Email)", options=list(user_options.keys()))
+                    new_data = render_25_field_form(key_suffix="create")
+                    submit_create = st.form_submit_button("Save Record")
+                    
+                if submit_create:
+                    new_data['user_id'] = user_options[selected_email]
+                    with get_db_session() as db:
+                        try:
+                            created = create_assessment(db, new_data)
+                            st.success(f"Successfully created record with ID {created.id}.")
+                        except Exception as e:
+                            st.error(f"Error creating record: {e}")
+            else:
+                st.warning("No users available in the system. Please register a user first to assign an assessment.")
 
         # ---------------------------
         # Tab 3: Update / Delete
