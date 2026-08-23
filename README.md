@@ -13,7 +13,7 @@ Regression — Predicts the customer's maximum safe monthly EMI amount.
 
 The project uses a dataset containing approximately 400,000 financial records with demographic, employment, income, household, financial, credit, and loan-related information.
 
-The platform combines data preprocessing, exploratory data analysis, feature engineering, machine learning, MLflow experiment tracking, and an interactive Streamlit web application.
+The platform combines data preprocessing, exploratory data analysis, feature engineering, machine learning, and an interactive Streamlit web application.
 
 Problem Statement
 
@@ -37,8 +37,6 @@ Engineer meaningful financial risk and affordability features.
 Develop classification models for EMI eligibility prediction.
 Develop regression models for maximum EMI prediction.
 Compare multiple machine learning algorithms.
-Track experiments and model performance using MLflow.
-Register and manage selected production models.
 Develop a multi-page Streamlit application.
 Provide real-time EMI eligibility and maximum EMI predictions.
 Implement financial data CRUD operations.
@@ -139,22 +137,6 @@ MAPE
 
 The final models will be selected based on their performance, generalization, and suitability for the application.
 
-MLflow
-
-MLflow will be used for machine learning experiment management.
-
-The MLflow implementation will provide:
-
-Experiment tracking
-Parameter logging
-Metric logging
-Model artifact tracking
-Model comparison
-Model version management
-Model registry
-
-Separate experiments will be maintained for classification and regression workflows.
-
 Application
 
 The final application will be developed using Streamlit.
@@ -165,7 +147,6 @@ EMI eligibility prediction
 Maximum EMI prediction
 Interactive financial data exploration
 Model performance information
-MLflow-related model/experiment information
 Financial data management
 CRUD operations
 
@@ -181,7 +162,6 @@ XGBoost	Gradient boosting models
 Matplotlib	Data visualization
 Seaborn	Statistical visualization
 Plotly	Interactive visualization
-MLflow	Experiment tracking and model registry
 Streamlit	Web application
 Pytest	Testing
 Git	Version control
@@ -213,13 +193,9 @@ Model Training       Model Training
 │                       │
 └───────────┬───────────┘
             ↓
-      MLflow Tracking
-            ↓
       Model Evaluation
             ↓
       Model Selection
-            ↓
-      Model Registry
             ↓
     Streamlit Application
             ↓
@@ -248,8 +224,6 @@ EMIPredict-AI/
 │
 ├── models/
 │
-├── mlflow/
-│
 ├── app/
 │   ├── pages/
 │   └── components/
@@ -270,7 +244,6 @@ Phase 4  → Feature Engineering
 Phase 5  → ML Dataset & Pipeline Preparation
 Phase 6  → Classification Modeling
 Phase 7  → Regression Modeling
-Phase 8  → MLflow Integration
 Phase 9  → Model Selection & Validation
 Phase 10 → Streamlit Application & CRUD
 Phase 11 → Testing & Production Preparation
@@ -293,7 +266,6 @@ Upcoming
  Feature engineering
  Classification modeling
  Regression modeling
- MLflow integration
  Model selection
  Streamlit application
  CRUD implementation
