@@ -1,0 +1,22 @@
+artifact_path: file:///D:/Projects/EMIPredict-AI/mlruns/1/models/m-015a588935754b0ca368b6c74541abaf/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.11.9
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.2.0
+mlflow_version: 3.15.1
+model_id: m-015a588935754b0ca368b6c74541abaf
+model_size_bytes: 1412807
+model_uuid: m-015a588935754b0ca368b6c74541abaf
+prompts: null
+run_id: 5537c1da6dea47a384c7413b8219b750
+utc_time_created: '2026-08-23 12:45:08.384390'

@@ -18,6 +18,7 @@ my_assessments = load_page("my_assessments", "my_assessments.py")
 model_performance = load_page("model_performance", "model_performance.py")
 data_analysis = load_page("data_analysis", "data_analysis.py")
 data_management = load_page("data_management", "data_management.py")
+mlflow_experiments = load_page("mlflow_experiments", "mlflow_experiments.py")
 
 def main():
     st.set_page_config(page_title="EMIPredict AI", page_icon="🏦", layout="wide")
@@ -80,7 +81,7 @@ def main():
     elif selection == "Model Performance":
         model_performance.render()
     elif selection == "MLflow Experiments":
-        st.info("MLflow Experiments section placeholder. MLflow tracking details will be integrated here.")
+        mlflow_experiments.render()
     elif selection == "Data Management":
         data_management.render()
 

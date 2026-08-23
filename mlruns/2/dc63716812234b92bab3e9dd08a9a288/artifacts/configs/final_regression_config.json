@@ -1,0 +1,35 @@
+{
+    "model_name": "Tuned Random Forest Regressor",
+    "model_type": "RandomForestRegressor",
+    "target": "max_monthly_emi",
+    "n_features": 49,
+    "random_state": 42,
+    "hyperparameters": {
+        "n_estimators": 150,
+        "max_depth": 20,
+        "min_samples_split": 5,
+        "min_samples_leaf": 2,
+        "max_features": 0.8,
+        "random_state": 42,
+        "n_jobs": -1
+    },
+    "training_samples": 283360,
+    "training_date_time": "2026-08-22 06:39:25",
+    "selected_reason": "Selected due to superior MAE/MAPE, excellent generalization, and critically, zero negative EMI predictions, making it more practically suitable for a financial EMI prediction system despite slightly higher RMSE/lower R\u00b2 than XGBoost.",
+    "performance": {
+        "test": {
+            "MAE": 237.89,
+            "RMSE": 854.63,
+            "R2": 0.9877,
+            "MAPE": 4.78,
+            "negative_predictions_count": 0
+        },
+        "validation": {
+            "MAE": 233.42,
+            "RMSE": 841.46,
+            "R2": 0.9882,
+            "MAPE": 4.66,
+            "negative_predictions_count": 0
+        }
+    }
+}
