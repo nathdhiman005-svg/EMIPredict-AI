@@ -3,6 +3,11 @@ import importlib.util
 import sys
 import os
 
+# Ensure project root is in sys.path for Streamlit Cloud
+project_root = os.path.abspath(os.path.dirname(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 # Dynamically load pages to avoid namespace collision between app.py and app/ directory
 def load_page(module_name, file_name):
     spec = importlib.util.spec_from_file_location(module_name, os.path.join("app", "pages", file_name))
