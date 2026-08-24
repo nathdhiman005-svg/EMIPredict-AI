@@ -1,278 +1,306 @@
-EMIPredict AI — Intelligent Financial Risk Assessment Platform
-Project Overview
+# EMIPredict AI
 
-EMIPredict AI is an intelligent financial risk assessment platform that uses machine learning to evaluate a customer's EMI affordability and financial risk.
+EMIPredict AI is a full-stack, machine-learning-powered application designed to intelligently assess loan eligibility and recommend safe maximum Monthly Installment (EMI) limits for borrowers. 
 
-The platform addresses two machine learning problems:
+By analyzing a user's demographics, income, financial obligations, and credit profile, EMIPredict AI helps mitigate default risks while offering transparent, data-driven financial recommendations.
 
-Classification — Predicts EMI eligibility across three categories:
-Eligible
-High_Risk
-Not_Eligible
-Regression — Predicts the customer's maximum safe monthly EMI amount.
+---
 
-The project uses a dataset containing approximately 400,000 financial records with demographic, employment, income, household, financial, credit, and loan-related information.
+## 1. Project Overview
 
-The platform combines data preprocessing, exploratory data analysis, feature engineering, machine learning, and an interactive Streamlit web application.
+**The Problem:** Traditional loan origination often relies on rigid, rule-based systems that fail to holistically analyze a borrower's complete financial burden (e.g., hidden expenses, emergency fund runway, real-time EMI-to-income ratios). 
 
-Problem Statement
+**The Solution:** EMIPredict AI replaces static heuristics with predictive machine learning models. It features a complete pipeline from raw data ingestion to real-time interactive inference, packaged in a user-friendly web interface.
 
-Many people struggle to manage loan EMIs because of inadequate financial planning and insufficient assessment of their financial capacity.
+**Target Audience:** 
+- **End Users (Borrowers):** Can input their financial details to receive instant, personalized EMI eligibility feedback and a calculated safe borrowing limit.
+- **Administrators (Loan Officers/Data Scientists):** Can manage assessment records, monitor dataset distributions, and track model performance metrics through a secure administrative portal.
 
-EMIPredict AI aims to provide data-driven financial risk insights by analyzing a customer's financial and demographic information and predicting:
+---
 
-Whether the customer is suitable for the requested EMI scenario.
-The maximum monthly EMI the customer can safely afford.
+## 2. Key Features
 
-The system is designed as a machine-learning-based decision-support platform, rather than a replacement for professional financial or lending decisions.
+### User-Facing Functionality
+- **Secure Authentication:** User registration, login, and role-based access control (User vs. Admin).
+- **Interactive EMI Assessment:** A comprehensive 25-field financial input form providing instant ML predictions for loan eligibility and maximum safe EMI.
+- **My Assessments:** A personalized dashboard where users can review their historical financial assessments and predictions.
 
-Project Objectives
+### Administrative Functionality
+- **Data Management (CRUD):** Complete interface to view, create, update, and delete financial assessment records and model performance benchmarks.
+- **Data Analysis Dashboard:** Live visualizations of the feature-engineered dataset, target distributions, and summary statistics.
+- **Model Performance Tracking:** Monitor classification and regression metrics directly within the UI.
+- **MLflow Integration:** Embedded MLflow tracking viewer to analyze experiment runs, model parameters, and training metrics (read-only production view).
 
-The major objectives of the project are:
+---
 
-Process and analyze approximately 400,000 financial records.
-Perform comprehensive data cleaning and validation.
-Conduct exploratory data analysis to identify financial and demographic patterns.
-Engineer meaningful financial risk and affordability features.
-Develop classification models for EMI eligibility prediction.
-Develop regression models for maximum EMI prediction.
-Compare multiple machine learning algorithms.
-Develop a multi-page Streamlit application.
-Provide real-time EMI eligibility and maximum EMI predictions.
-Implement financial data CRUD operations.
-Deploy the application on Streamlit Cloud.
-Maintain a reproducible and well-documented ML workflow.
-Machine Learning Problems
-1. EMI Eligibility Classification
+## 3. System Architecture
 
-The classification model predicts one of three possible EMI eligibility categories:
+EMIPredict AI utilizes a modular, decoupled architecture:
 
-Class	Meaning
-Eligible	Customer has relatively comfortable EMI affordability
-High_Risk	Customer represents a marginal/higher-risk case
-Not_Eligible	Customer has insufficient financial capacity for the EMI scenario
+```mermaid
+graph TD
+    A[Streamlit Frontend] -->|User Input| B(Inference Pipeline)
+    A -->|CRUD Operations| C(SQLAlchemy ORM)
+    B -->|Load Artifacts| D[(Serialized Models & Preprocessors)]
+    C -->|Read/Write| E[(PostgreSQL Database)]
+    A -->|Read Tracking| F[(MLflow SQLite DB & mlruns)]
+    
+    subgraph "Backend Services (src/)"
+    B
+    C
+    end
+```
 
-The project will evaluate multiple classification algorithms and select the best-performing model based on appropriate evaluation metrics.
+- **Frontend:** Streamlit (`app.py` and `app/pages/`) handles routing, session state, UI rendering, and form validation.
+- **Backend/Business Logic:** `src/` modules manage database connections, authentication, and the inference pipeline.
+- **Machine Learning Models:** Pre-trained and serialized using `joblib`, loaded dynamically at runtime for inference without requiring continuous retraining.
+- **Database:** PostgreSQL (hosted via Neon) stores user credentials, historical assessments, and model performance metrics.
+- **Tracking:** A local MLflow instance (`mlflow.db` and `mlruns/`) is deployed alongside the app to provide historical training metadata.
 
-2. Maximum Monthly EMI Regression
+---
 
-The regression model predicts:
+## 4. Machine Learning Pipeline
 
-max_monthly_emi
+The ML pipeline is cleanly separated into offline development (Notebooks) and online runtime (Inference):
 
-This represents the maximum safe monthly EMI amount for a customer.
+### Offline Development
+1. **Data Preprocessing:** Handling missing values, outlier capping, and data type conversions.
+2. **Feature Engineering:** Creating powerful derived indicators such as:
+   - *Total Monthly Expenses* & *Total Financial Burden*
+   - *Income After Expenses*
+   - *EMI to Income Ratio*
+   - *Emergency Fund Coverage (Months)*
+3. **Encoding & Scaling:** Target encoding for high-cardinality categorical variables (e.g., Employment Type, Education) and standardization of numerical features.
+4. **Training:** Evaluating multiple algorithms (Logistic Regression, Random Forest, XGBoost) and tuning hyperparameters.
+5. **Serialization:** Exporting the final pipelines, encoders, and models to the `models/` directory using `joblib`.
 
-The target is a continuous numerical value ranging approximately from ₹500 to ₹50,000.
+### Online Inference
+When a user submits an assessment, the application:
+1. Instantiates the `EMIInferencePipeline`.
+2. Loads the serialized `preprocessor.pkl`, `target_encoder.pkl`, and the prediction models.
+3. Transforms the raw user input into the engineered feature space.
+4. Generates and returns the predictions in real-time.
 
-Multiple regression algorithms will be trained and compared before selecting the final production model.
+---
 
-Dataset
+## 5. Models
 
-The project uses a dataset containing approximately 400,000 financial records.
+The application relies on two primary production models:
 
-The available input information covers areas including:
+1. **Classification Model (EMI Eligibility)**
+   - **Algorithm:** XGBoost Classifier (`models/xgboost_classification_model.pkl`)
+   - **Purpose:** Predicts whether the borrower is `Eligible`, `High_Risk`, or `Not_Eligible`.
+   
+2. **Regression Model (Maximum Safe EMI)**
+   - **Algorithm:** Random Forest Regressor (`models/final_regression_model.pkl`)
+   - **Purpose:** Predicts the maximum monthly installment amount the borrower can safely afford based on their financial burden.
 
-Personal demographics
-Employment and income
-Housing and family characteristics
-Monthly financial obligations
-Existing loans and EMI burden
-Credit history
-Bank balance and emergency funds
-Loan application details
-Main Input Categories
-Personal Demographics
-Employment and Income
-Housing and Family
-Monthly Financial Obligations
-Financial Status and Credit History
-Loan Application Details
-Target Variables
+**Preprocessing Artifacts:**
+- `models/preprocessor.pkl`: Handles numerical scaling and basic categorical encoding.
+- `models/target_encoder.pkl`: Handles target-based encoding for categorical features.
 
-Classification:
+---
 
-emi_eligibility
+## 6. MLflow Integration
 
-Regression:
+EMIPredict AI utilizes **MLflow** for robust experiment tracking during the offline training phase.
 
-max_monthly_emi
+- **Experiments Tracked:** `EMIPredict_Classification`, `EMIPredict_Regression`
+- **Tracked Artifacts:** Hyperparameters, classification reports, R² scores, MAE/RMSE, and serialized model binaries.
+- **Production Implementation:** The local `mlflow.db` SQLite database and the `mlruns/` artifact directory are bundled with the repository. 
+- **UI Integration:** The Streamlit application features a dedicated `MLflow Experiments` page that queries this local tracking database to display historical training metrics and run comparisons to the administrators.
 
-Detailed dataset analysis and variable-level documentation will be added during the data understanding phase.
+*(Note: The deployed application does not actively run an MLflow tracking server or Model Registry; it utilizes the tracked data in a read-only capacity for transparency).*
 
-Machine Learning Models
-Classification
+---
 
-The project will evaluate at least three classification models:
+## 7. Data
 
-Logistic Regression
-Random Forest Classifier
-XGBoost Classifier
+The project utilizes data in three distinct phases:
 
-Additional models may be evaluated if required.
+1. **Raw Dataset** (`data/raw/` - *Ignored in Git*): The initial uncleaned financial records.
+2. **Cleaned Dataset** (`data/processed/financial_data_cleaned.csv` - *Ignored in Git*): Data post-imputation and outlier handling.
+3. **Feature Engineered Dataset** (`data/processed/financial_data_feature_engineered.csv` - *Tracked in Git*): The final dataset containing derived financial indicators. **This specific file is required by the deployed Streamlit application** to render the administrative Data Analysis dashboard.
 
-Classification evaluation will include metrics such as:
+---
 
-Accuracy
-Precision
-Recall
-F1-score
-ROC-AUC
-Confusion Matrix
-Regression
+## 8. Database
 
-The project will evaluate at least three regression models:
+**Technology:** PostgreSQL (SQLAlchemy ORM)
 
-Linear Regression
-Random Forest Regressor
-XGBoost Regressor
+### Key Entities:
+- `users`: Manages authentication credentials (`email`, `password_hash`) and authorization (`role`).
+- `financial_assessments`: Stores the complete 25-field financial profile of a borrower along with the ML predictions generated at the time of submission. Enforces a strict `user_id` foreign key constraint.
+- `model_performance_records`: Administrative table used to log and track production model metrics (Accuracy, F1, R², RMSE) over time.
 
-Additional models may be evaluated if required.
+---
 
-Regression evaluation will include:
+## 9. Streamlit Application Pages
 
-MAE
-RMSE
-R²
-MAPE
+| Page | Access Level | Purpose |
+|------|--------------|---------|
+| **Home** | Public | Project landing page and overview. |
+| **Auth** | Public | User registration and authentication login. |
+| **EMI Assessment** | User | The core ML prediction form for EMI eligibility. |
+| **My Assessments** | User | Personal history of saved financial assessments. |
+| **Model Performance** | Admin | Track and log production model metrics. |
+| **Data Analysis** | Admin | View dataset distributions and summary statistics. |
+| **Data Management** | Admin | Full CRUD interface for database records and user assignments. |
+| **MLflow Experiments**| Admin | Read-only viewer for MLflow training experiments and metrics. |
 
-The final models will be selected based on their performance, generalization, and suitability for the application.
+---
 
-Application
+## 10. Repository Structure
 
-The final application will be developed using Streamlit.
-
-The application will provide:
-
-EMI eligibility prediction
-Maximum EMI prediction
-Interactive financial data exploration
-Model performance information
-Financial data management
-CRUD operations
-
-The application will be designed as a multi-page web application.
-
-Technology Stack
-Technology	Purpose
-Python 3.11	Programming language
-Pandas	Data processing
-NumPy	Numerical computing
-Scikit-learn	Machine learning and preprocessing
-XGBoost	Gradient boosting models
-Matplotlib	Data visualization
-Seaborn	Statistical visualization
-Plotly	Interactive visualization
-Streamlit	Web application
-Pytest	Testing
-Git	Version control
-GitHub	Source code management
-Streamlit Cloud	Application deployment
-Project Architecture
-
-The project follows an end-to-end machine learning architecture:
-
-Dataset
-   ↓
-Data Quality Assessment
-   ↓
-Data Preprocessing
-   ↓
-Exploratory Data Analysis
-   ↓
-Feature Engineering
-   ↓
-ML Dataset Preparation
-   ↓
-┌───────────────────────┐
-│                       │
-▼                       ▼
-Classification       Regression
-│                       │
-▼                       ▼
-Model Training       Model Training
-│                       │
-└───────────┬───────────┘
-            ↓
-      Model Evaluation
-            ↓
-      Model Selection
-            ↓
-    Streamlit Application
-            ↓
-     Streamlit Cloud
-
-This architecture will be refined as the implementation progresses.
-
-Project Structure
+```text
 EMIPredict-AI/
-│
-├── data/
-│   ├── raw/
-│   └── processed/
-│
-├── notebooks/
-│
-├── src/
-│   ├── data/
-│   ├── preprocessing/
-│   ├── feature_engineering/
-│   ├── eda/
-│   ├── classification/
-│   ├── regression/
-│   ├── evaluation/
-│   └── utils/
-│
-├── models/
-│
+├── app.py                      # Streamlit application entry point
 ├── app/
-│   ├── pages/
-│   └── components/
-│
-├── tests/
-│
-└── reports/
-    └── figures/
-Development Workflow
+│   └── pages/                  # Streamlit application pages (auth, analysis, etc.)
+├── src/                        # Backend business logic and inference code
+│   ├── database/               # SQLAlchemy models, CRUD, and connection logic
+│   ├── feature_engineering/    # Feature creation pipelines
+│   ├── ml_preparation/         # Data splitting and class weighting
+│   ├── model_inference/        # Runtime ML inference pipeline
+│   └── preprocessing/          # Data cleaning and imputation
+├── models/                     # Serialized production ML models (.pkl)
+├── data/
+│   └── processed/              # Required data artifacts (feature_engineered.csv)
+├── notebooks/                  # Jupyter notebooks for offline ML development
+├── mlruns/                     # MLflow experiment tracking artifacts
+├── mlflow.db                   # MLflow tracking SQLite database
+├── requirements.txt            # Python dependencies
+└── .gitignore                  # Git tracking rules
+```
 
-The project is being developed through the following phases:
+---
 
-Phase 0  → Project Foundation
-Phase 1  → Dataset Understanding & Data Quality
-Phase 2  → Data Preprocessing
-Phase 3  → Exploratory Data Analysis
-Phase 4  → Feature Engineering
-Phase 5  → ML Dataset & Pipeline Preparation
-Phase 6  → Classification Modeling
-Phase 7  → Regression Modeling
-Phase 9  → Model Selection & Validation
-Phase 10 → Streamlit Application & CRUD
-Phase 11 → Testing & Production Preparation
-Phase 12 → Streamlit Cloud Deployment
-Current Development Status
-Phase 0 — Project Foundation
- Project requirements defined
- Technology stack selected
- Git repository initialized
- GitHub repository configured
- Project structure created
- Python 3.11 virtual environment created
- Project dependencies installed
- Dependency management configured
-Upcoming
- Dataset understanding
- Data quality assessment
- Data preprocessing
- Exploratory data analysis
- Feature engineering
- Classification modeling
- Regression modeling
- Model selection
- Streamlit application
- CRUD implementation
- Testing
- Streamlit Cloud deployment
-Project Status
+## 11. Notebooks (ML Lifecycle)
 
-Current Phase: Phase 0 — Project Foundation
+The `notebooks/` directory documents the complete end-to-end Machine Learning lifecycle. These are used strictly for offline development and are not executed by the live application:
 
-Status: Foundation setup complete. Development will proceed with dataset understanding and data quality assessment.
+- `01_dataset_understanding_and_data_quality.ipynb`: Initial data inspection and profiling.
+- `02_data_preprocessing.ipynb`: Handling missing values, outliers, and data types.
+- `03_eda.ipynb`: Exploratory Data Analysis and visual feature distributions.
+- `04_feature_engineering.ipynb`: Creation of derived financial indicators and encoding.
+- `05_ml_preparation_and__model_training.ipynb`: Train/test splitting, hyperparameter tuning, model evaluation, MLflow logging, and final serialization.
+
+---
+
+## 12. Scripts
+
+The `scripts/` directory contains automation and utility scripts that streamline local development and repository management. *(Note: Development scripts are not executed in the deployed runtime environment).*
+
+---
+
+## 13. Technology Stack
+
+| Technology | Purpose |
+|------------|---------|
+| **Python 3.11** | Core programming language |
+| **Streamlit** | Web application framework and UI |
+| **PostgreSQL** | Relational database (hosted on Neon) |
+| **SQLAlchemy** | Database Object-Relational Mapping (ORM) |
+| **Scikit-Learn** | Preprocessing, pipelines, and Regression modeling |
+| **XGBoost** | Gradient boosting Classification modeling |
+| **MLflow** | Experiment tracking and metric logging |
+| **Pandas / NumPy** | Data manipulation and numerical operations |
+| **Joblib** | Model serialization and deserialization |
+
+---
+
+## 14. Installation and Local Setup
+
+### Prerequisites
+- Python 3.11
+- Git (with Git LFS installed)
+- A PostgreSQL database instance
+
+### Setup Instructions
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/nathdhiman005-svg/EMIPredict-AI.git
+   cd EMIPredict-AI
+   ```
+
+2. **Pull Large Files (Git LFS):**
+   ```bash
+   git lfs pull
+   ```
+
+3. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv .venv
+   # Windows:
+   .venv\Scripts\activate
+   # Linux/Mac:
+   source .venv/bin/activate
+   ```
+
+4. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+5. **Configure Secrets:**
+   Create a `.streamlit/secrets.toml` file in the root directory and add your PostgreSQL connection string:
+   ```toml
+   POSTGRES_URI = "postgresql://user:password@host/dbname"
+   ```
+   *(Note: Never commit `secrets.toml` to version control).*
+
+6. **Run the application:**
+   ```bash
+   streamlit run app.py
+   ```
+
+---
+
+## 15. Deployment
+
+EMIPredict AI is configured for seamless deployment on **Streamlit Cloud**.
+
+- **Repository:** Connected directly to the GitHub `main` branch.
+- **Entry Point:** The "Main file path" must be configured to `app.py`.
+- **Environment:** Streamlit Cloud Linux environment running Python 3.11.
+- **Secrets:** The `POSTGRES_URI` must be added to the Streamlit Cloud "Secrets" configuration panel.
+- **Git LFS:** Streamlit Cloud natively supports Git LFS, which is required to download the serialized `.pkl` models from the `models/` directory during deployment.
+
+---
+
+## 16. Git LFS
+
+This repository utilizes Git Large File Storage (LFS) to manage large binary files that exceed GitHub's standard tracking limits.
+
+The following artifacts require Git LFS:
+- Serialized machine learning models (`.pkl`)
+- Preprocessing and encoding artifacts
+- Historical MLflow model artifacts (`.skops`, `.pkl`)
+
+Ensure Git LFS is installed locally before pulling the repository to prevent downloading pointer files instead of actual binaries.
+
+---
+
+## 17. Current Project Status
+
+EMIPredict AI is a complete, fully functional deployment. 
+
+**Currently Working:**
+- End-to-end user authentication and role-based dashboards.
+- Real-time loan eligibility and Max EMI predictions.
+- Administrative CRUD operations for database records.
+- Live dataset monitoring and MLflow tracking visualizations.
+
+### Future Improvements
+While EMIPredict AI is fully functional, potential future extensions could include:
+- **Active Model Registry:** Transitioning from static `.pkl` files to a live MLflow Model Registry for automated model versioning and seamless A/B testing.
+- **Automated Retraining Pipeline:** Implementing Apache Airflow or GitHub Actions to automatically retrain the models when data drift is detected in the `model_performance_records` table.
+- **Explainable AI (XAI):** Integrating SHAP (SHapley Additive exPlanations) into the UI to show users exactly *why* their specific loan was approved or denied.
+
+---
+
+## 18. Limitations
+
+- **Stateless MLflow:** The deployed application relies on a bundled SQLite `mlflow.db`. It cannot log *new* training runs from the cloud without a dedicated remote MLflow tracking server.
+- **In-Memory Fallback:** If the `POSTGRES_URI` is omitted or invalid, the application defaults to an in-memory SQLite database (`sqlite:///:memory:`). In this mode, user accounts and financial assessments will be lost whenever the server restarts.
